@@ -69,7 +69,7 @@ def main(query):
 
     # computing idf frequencies
     np.seterr(divide='ignore')
-    ida_frequency = np.log(len(keywords) / np.sum(words_matrix != 0, axis=0))
+    ida_frequency = np.log(len(docs) / np.count_nonzero(words_matrix, axis=0))
     ida_frequency[ida_frequency == np.inf] = 0
 
     # computing idf representation
@@ -77,14 +77,17 @@ def main(query):
     words_matrix *= ida_frequency
 
     # computing similarity
-    sim = np.sum(query_vector * words_matrix, axis=1) / (
-                np.linalg.norm(query_vector) * np.linalg.norm(words_matrix, axis=1))
+    length = np.linalg.norm(query_vector) * np.linalg.norm(words_matrix, axis=1)
+    length[length == 0] = 1
+    sim = np.sum(query_vector * words_matrix, axis=1) / length
+
+    # sim = [0 if np.isnan(s) else s for s in sim]
     results = np.argsort(sim)[::-1]
 
     # showing results
     for doc_idx in results:
         title = orginal_docs[doc_idx].split("\n")[0]
-        print(f'{title:<80} {sim[doc_idx]}')
+        print(f'{title:<80} {sim[doc_idx]:.2f}')
 
 
 if __name__ == '__main__':
